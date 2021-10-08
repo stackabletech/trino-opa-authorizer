@@ -8,10 +8,12 @@ import java.net.http.HttpResponse;
 import java.security.Principal;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.security.AccessDeniedException;
 import io.trino.spi.security.SystemAccessControl;
@@ -55,6 +57,12 @@ public class OpaAuthorizer implements SystemAccessControl {
         public OpaTableCtx(String catalogName) {
             this.catalog = catalogName;
             this.schema = null;
+            this.table = null;
+        }
+
+        public OpaTableCtx(CatalogSchemaName name) {
+            this.catalog = name.getCatalogName();
+            this.schema = name.getSchemaName();
             this.table = null;
         }
 
@@ -110,6 +118,14 @@ public class OpaAuthorizer implements SystemAccessControl {
         return result.result;
     }
 
+    private boolean canAccessCatalog(SystemSecurityContext context, String catalogName) {
+        return queryOpa("can_access_catalog", context, new OpaTableCtx(catalogName));
+    }
+
+    private boolean canAccessSchema(SystemSecurityContext context, CatalogSchemaName schema) {
+        return queryOpa("can_access_schema", context, new OpaTableCtx(schema));
+    }
+
     @Override
     public void checkCanSetUser(Optional<Principal> principal, String userName) {
         if (!principal.map(p -> p.getName()).equals(Optional.of(userName))) {
@@ -126,8 +142,41 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanAccessCatalog(SystemSecurityContext context, String catalogName) {
-        if (!queryOpa("can_access_catalog", context, new OpaTableCtx(catalogName))) {
-            AccessDeniedException.denyExecuteQuery();
+        if (!canAccessCatalog(context, catalogName)) {
+            AccessDeniedException.denyCatalogAccess(catalogName);
+        }
+    }
+
+    @Override
+    public Set<String> filterCatalogs(SystemSecurityContext context, Set<String> catalogs) {
+        return catalogs.parallelStream().filter(catalog -> canAccessCatalog(context, catalog))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<String> filterSchemas(SystemSecurityContext context, String catalogName, Set<String> schemaNames) {
+        return schemaNames.parallelStream().filter(schema -> canAccessSchema(context, new CatalogSchemaName(catalogName, schema))).collect(Collectors.toSet());
+    }
+
+    @Override
+    public void checkCanShowSchemas(SystemSecurityContext context, String catalogName) {
+        if (!queryOpa("can_show_schemas", context, new OpaTableCtx(catalogName))) {
+            AccessDeniedException.denyShowSchemas(" of catalog " + catalogName);
+        }
+    }
+
+    @Override
+    public void checkCanShowTables(SystemSecurityContext context, CatalogSchemaName schema) {
+        if (!queryOpa("can_show_tables", context, new OpaTableCtx(schema))) {
+            AccessDeniedException.denyShowTables(schema.getSchemaName(), " in catalog " + schema.getCatalogName());
+        }
+    }
+
+    @Override
+    public void checkCanSelectFromColumns(SystemSecurityContext context, CatalogSchemaTableName table,
+            Set<String> columns) {
+        if (!queryOpa("can_select_from_columns", context, new OpaTableCtx(table))) {
+            AccessDeniedException.denySelectColumns(table.getSchemaTableName().getTableName(), columns);
         }
     }
 }
