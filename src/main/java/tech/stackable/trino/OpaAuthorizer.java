@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaTableName;
+import io.trino.spi.connector.SchemaTableName;
 import io.trino.spi.security.AccessDeniedException;
 import io.trino.spi.security.SystemAccessControl;
 import io.trino.spi.security.SystemSecurityContext;
@@ -39,6 +40,12 @@ public class OpaAuthorizer implements SystemAccessControl {
     @SuppressWarnings("unused")
     private static class OpaQueryRequest {
         public OpaTable table;
+        public String column;
+        public Set<String> columns;
+        public String owner;
+
+        public OpaQueryRequest() {
+        }
 
         public OpaQueryRequest(OpaTable table) {
             this.table = table;
@@ -134,6 +141,22 @@ public class OpaAuthorizer implements SystemAccessControl {
         return queryOpa("can_access_schema", context, new OpaQueryRequest(new OpaTable(schema)));
     }
 
+    private boolean canAccessTable(SystemSecurityContext context, CatalogSchemaTableName table) {
+        return queryOpa("can_access_table", context, new OpaQueryRequest(new OpaTable(table)));
+    }
+
+    private boolean canAccessColumn(SystemSecurityContext context, CatalogSchemaTableName table, String column) {
+        OpaQueryRequest request = new OpaQueryRequest(new OpaTable(table));
+        request.column = column;
+        return queryOpa("can_access_column", context, request);
+    }
+
+    private boolean canViewQueryOwnedBy(SystemSecurityContext context, String owner) {
+        OpaQueryRequest request = new OpaQueryRequest();
+        request.owner = owner;
+        return queryOpa("can_view_query_owned_by", context, request);
+    }
+
     @Override
     public void checkCanSetUser(Optional<Principal> principal, String userName) {
         if (!principal.map(p -> p.getName()).equals(Optional.of(userName))) {
@@ -169,6 +192,26 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     @Override
+    public Set<SchemaTableName> filterTables(SystemSecurityContext context, String catalogName,
+            Set<SchemaTableName> tableNames) {
+        return tableNames.parallelStream()
+                .filter(table -> canAccessTable(context, new CatalogSchemaTableName(catalogName, table)))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<String> filterColumns(SystemSecurityContext context, CatalogSchemaTableName table, Set<String> columns) {
+        return columns.parallelStream().filter(column -> canAccessColumn(context, table, column))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<String> filterViewQueryOwnedBy(SystemSecurityContext context, Set<String> queryOwners) {
+        return queryOwners.parallelStream().filter(owner -> canViewQueryOwnedBy(context, owner))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public void checkCanShowSchemas(SystemSecurityContext context, String catalogName) {
         if (!queryOpa("can_show_schemas", context, new OpaQueryRequest(new OpaTable(catalogName)))) {
             AccessDeniedException.denyShowSchemas(" of catalog " + catalogName);
@@ -185,7 +228,9 @@ public class OpaAuthorizer implements SystemAccessControl {
     @Override
     public void checkCanSelectFromColumns(SystemSecurityContext context, CatalogSchemaTableName table,
             Set<String> columns) {
-        if (!queryOpa("can_select_from_columns", context, new OpaQueryRequest(new OpaTable(table)))) {
+        OpaQueryRequest request = new OpaQueryRequest(new OpaTable(table));
+        request.columns = columns;
+        if (!queryOpa("can_select_from_columns", context, request)) {
             AccessDeniedException.denySelectColumns(table.getSchemaTableName().getTableName(), columns);
         }
     }
