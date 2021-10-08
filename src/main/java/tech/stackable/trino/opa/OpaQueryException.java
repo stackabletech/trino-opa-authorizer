@@ -1,4 +1,4 @@
-package tech.stackable.trino;
+package tech.stackable.trino.opa;
 
 import java.net.http.HttpResponse;
 

@@ -1,4 +1,4 @@
-package tech.stackable.trino;
+package tech.stackable.trino.opa;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -22,6 +22,12 @@ import io.trino.spi.security.SystemSecurityContext;
 public class OpaAuthorizer implements SystemAccessControl {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper json = new ObjectMapper();
+
+    private final URI opaApiUri;
+
+    public OpaAuthorizer(URI opaApiUri) {
+        this.opaApiUri = opaApiUri;
+    }
 
     @SuppressWarnings("unused")
     private static class OpaQuery {
@@ -105,7 +111,7 @@ public class OpaAuthorizer implements SystemAccessControl {
         HttpResponse<String> response;
         try {
             response = httpClient.send(
-                    HttpRequest.newBuilder(URI.create("http://localhost:8181/v1/data/trino/" + policyName))
+                    HttpRequest.newBuilder(opaApiUri.resolve("v1/data/trino/" + policyName))
                             .header("Content-Type", "application/json")
                             .POST(HttpRequest.BodyPublishers.ofByteArray(queryJson)).build(),
                     HttpResponse.BodyHandlers.ofString());
