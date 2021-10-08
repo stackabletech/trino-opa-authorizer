@@ -99,11 +99,13 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     private boolean queryOpa(String policyName, SystemSecurityContext context, OpaQueryRequest request) {
         String username = context.getIdentity().getUser();
-        OpaQueryInput query = new OpaQueryInput();
-        query.user = new OpaQueryUser(username);
-        query.request = request;
+        OpaQueryInput input = new OpaQueryInput();
+        input.user = new OpaQueryUser(username);
+        input.request = request;
         byte[] queryJson;
         try {
+            OpaQuery query = new OpaQuery();
+            query.input = input;
             queryJson = json.writeValueAsBytes(query);
         } catch (JsonProcessingException e) {
             throw new OpaQueryException.SerializeFailed(e);

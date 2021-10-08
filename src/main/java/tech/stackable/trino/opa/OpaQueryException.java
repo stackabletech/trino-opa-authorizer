@@ -37,7 +37,7 @@ public abstract class OpaQueryException extends RuntimeException {
         private static final long serialVersionUID = 3141599137357908279L;
 
         public PolicyNotFound(String policyName) {
-            super("No OPA policy named " + policyName, null);
+            super("OPA policy named " + policyName + " did not return a value (or does not exist)", null);
         }
     }
 
