@@ -1,6 +1,5 @@
 package tech.stackable.trino;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,24 +22,30 @@ public class OpaAuthorizer implements SystemAccessControl {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper json = new ObjectMapper();
 
-    private static class OpaQuery<Ctx> {
-        public final OpaQueryInput<Ctx> input;
+    @SuppressWarnings("unused")
+    private static class OpaQuery {
+        public OpaQueryInput input;
+    }
 
-        public OpaQuery(OpaQueryInput<Ctx> input) {
-            this.input = input;
+    @SuppressWarnings("unused")
+    private static class OpaQueryInput {
+        public OpaQueryUser user;
+        public OpaQueryRequest request;
+
+        public OpaQueryInput() {
         }
     }
 
-    private static class OpaQueryInput<Ctx> {
-        public final OpaQueryUser user;
-        public final Ctx context;
+    @SuppressWarnings("unused")
+    private static class OpaQueryRequest {
+        public OpaTable table;
 
-        public OpaQueryInput(OpaQueryUser user, Ctx context) {
-            this.user = user;
-            this.context = context;
+        public OpaQueryRequest(OpaTable table) {
+            this.table = table;
         }
     }
 
+    @SuppressWarnings("unused")
     private static class OpaQueryUser {
         public final String name;
 
@@ -49,24 +54,25 @@ public class OpaAuthorizer implements SystemAccessControl {
         }
     }
 
-    private static class OpaTableCtx {
+    @SuppressWarnings("unused")
+    private static class OpaTable {
         public final String catalog;
         public final String schema;
         public final String table;
 
-        public OpaTableCtx(String catalogName) {
+        public OpaTable(String catalogName) {
             this.catalog = catalogName;
             this.schema = null;
             this.table = null;
         }
 
-        public OpaTableCtx(CatalogSchemaName name) {
+        public OpaTable(CatalogSchemaName name) {
             this.catalog = name.getCatalogName();
             this.schema = name.getSchemaName();
             this.table = null;
         }
 
-        public OpaTableCtx(CatalogSchemaTableName name) {
+        public OpaTable(CatalogSchemaTableName name) {
             this.catalog = name.getCatalogName();
             this.schema = name.getSchemaTableName().getSchemaName();
             this.table = name.getSchemaTableName().getTableName();
@@ -78,9 +84,11 @@ public class OpaAuthorizer implements SystemAccessControl {
         public Boolean result;
     }
 
-    private <Ctx> boolean queryOpa(String policyName, SystemSecurityContext securityContext, Ctx queryContext) {
-        String username = securityContext.getIdentity().getUser();
-        OpaQueryInput<Ctx> query = new OpaQueryInput<>(new OpaQueryUser(username), queryContext);
+    private boolean queryOpa(String policyName, SystemSecurityContext context, OpaQueryRequest request) {
+        String username = context.getIdentity().getUser();
+        OpaQueryInput query = new OpaQueryInput();
+        query.user = new OpaQueryUser(username);
+        query.request = request;
         byte[] queryJson;
         try {
             queryJson = json.writeValueAsBytes(query);
@@ -119,11 +127,11 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     private boolean canAccessCatalog(SystemSecurityContext context, String catalogName) {
-        return queryOpa("can_access_catalog", context, new OpaTableCtx(catalogName));
+        return queryOpa("can_access_catalog", context, new OpaQueryRequest(new OpaTable(catalogName)));
     }
 
     private boolean canAccessSchema(SystemSecurityContext context, CatalogSchemaName schema) {
-        return queryOpa("can_access_schema", context, new OpaTableCtx(schema));
+        return queryOpa("can_access_schema", context, new OpaQueryRequest(new OpaTable(schema)));
     }
 
     @Override
@@ -155,19 +163,21 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public Set<String> filterSchemas(SystemSecurityContext context, String catalogName, Set<String> schemaNames) {
-        return schemaNames.parallelStream().filter(schema -> canAccessSchema(context, new CatalogSchemaName(catalogName, schema))).collect(Collectors.toSet());
+        return schemaNames.parallelStream()
+                .filter(schema -> canAccessSchema(context, new CatalogSchemaName(catalogName, schema)))
+                .collect(Collectors.toSet());
     }
 
     @Override
     public void checkCanShowSchemas(SystemSecurityContext context, String catalogName) {
-        if (!queryOpa("can_show_schemas", context, new OpaTableCtx(catalogName))) {
+        if (!queryOpa("can_show_schemas", context, new OpaQueryRequest(new OpaTable(catalogName)))) {
             AccessDeniedException.denyShowSchemas(" of catalog " + catalogName);
         }
     }
 
     @Override
     public void checkCanShowTables(SystemSecurityContext context, CatalogSchemaName schema) {
-        if (!queryOpa("can_show_tables", context, new OpaTableCtx(schema))) {
+        if (!queryOpa("can_show_tables", context, new OpaQueryRequest(new OpaTable(schema)))) {
             AccessDeniedException.denyShowTables(schema.getSchemaName(), " in catalog " + schema.getCatalogName());
         }
     }
@@ -175,7 +185,7 @@ public class OpaAuthorizer implements SystemAccessControl {
     @Override
     public void checkCanSelectFromColumns(SystemSecurityContext context, CatalogSchemaTableName table,
             Set<String> columns) {
-        if (!queryOpa("can_select_from_columns", context, new OpaTableCtx(table))) {
+        if (!queryOpa("can_select_from_columns", context, new OpaQueryRequest(new OpaTable(table)))) {
             AccessDeniedException.denySelectColumns(table.getSchemaTableName().getTableName(), columns);
         }
     }
