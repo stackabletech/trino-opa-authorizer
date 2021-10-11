@@ -37,7 +37,8 @@ public abstract class OpaQueryException extends RuntimeException {
         private static final long serialVersionUID = 3141599137357908279L;
 
         public PolicyNotFound(String policyName) {
-            super("OPA policy named " + policyName + " did not return a value (or does not exist)", null);
+            super("OPA policy named " + policyName + " did not return a value (or does not exist)",
+                    null);
         }
     }
 
@@ -45,8 +46,8 @@ public abstract class OpaQueryException extends RuntimeException {
         private static final long serialVersionUID = 3141599137357908279L;
 
         public <T> OpaServerError(String policyName, HttpResponse<T> response) {
-            super("OPA server returned status " + response.statusCode() + " when processing policy " + policyName + ": "
-                    + response.body(), null);
+            super("OPA server returned status " + response.statusCode() + " when processing policy "
+                    + policyName + ": " + response.body(), null);
         }
     }
 }

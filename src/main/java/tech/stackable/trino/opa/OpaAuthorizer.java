@@ -39,8 +39,7 @@ public class OpaAuthorizer implements SystemAccessControl {
         public OpaQueryUser user;
         public OpaQueryRequest request;
 
-        public OpaQueryInput() {
-        }
+        public OpaQueryInput() {}
     }
 
     @SuppressWarnings("unused")
@@ -50,8 +49,7 @@ public class OpaAuthorizer implements SystemAccessControl {
         public Set<String> columns;
         public String owner;
 
-        public OpaQueryRequest() {
-        }
+        public OpaQueryRequest() {}
 
         public OpaQueryRequest(OpaTable table) {
             this.table = table;
@@ -97,7 +95,8 @@ public class OpaAuthorizer implements SystemAccessControl {
         public Boolean result;
     }
 
-    private boolean queryOpa(String policyName, SystemSecurityContext context, OpaQueryRequest request) {
+    private boolean queryOpa(String policyName, SystemSecurityContext context,
+            OpaQueryRequest request) {
         String username = context.getIdentity().getUser();
         OpaQueryInput input = new OpaQueryInput();
         input.user = new OpaQueryUser(username);
@@ -142,7 +141,8 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     private boolean canAccessCatalog(SystemSecurityContext context, String catalogName) {
-        return queryOpa("can_access_catalog", context, new OpaQueryRequest(new OpaTable(catalogName)));
+        return queryOpa("can_access_catalog", context,
+                new OpaQueryRequest(new OpaTable(catalogName)));
     }
 
     private boolean canAccessSchema(SystemSecurityContext context, CatalogSchemaName schema) {
@@ -153,7 +153,8 @@ public class OpaAuthorizer implements SystemAccessControl {
         return queryOpa("can_access_table", context, new OpaQueryRequest(new OpaTable(table)));
     }
 
-    private boolean canAccessColumn(SystemSecurityContext context, CatalogSchemaTableName table, String column) {
+    private boolean canAccessColumn(SystemSecurityContext context, CatalogSchemaTableName table,
+            String column) {
         OpaQueryRequest request = new OpaQueryRequest(new OpaTable(table));
         request.column = column;
         return queryOpa("can_access_column", context, request);
@@ -193,35 +194,39 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     @Override
-    public Set<String> filterSchemas(SystemSecurityContext context, String catalogName, Set<String> schemaNames) {
-        return schemaNames.parallelStream()
-                .filter(schema -> canAccessSchema(context, new CatalogSchemaName(catalogName, schema)))
+    public Set<String> filterSchemas(SystemSecurityContext context, String catalogName,
+            Set<String> schemaNames) {
+        return schemaNames.parallelStream().filter(
+                schema -> canAccessSchema(context, new CatalogSchemaName(catalogName, schema)))
                 .collect(Collectors.toSet());
     }
 
     @Override
     public Set<SchemaTableName> filterTables(SystemSecurityContext context, String catalogName,
             Set<SchemaTableName> tableNames) {
-        return tableNames.parallelStream()
-                .filter(table -> canAccessTable(context, new CatalogSchemaTableName(catalogName, table)))
+        return tableNames.parallelStream().filter(
+                table -> canAccessTable(context, new CatalogSchemaTableName(catalogName, table)))
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public Set<String> filterColumns(SystemSecurityContext context, CatalogSchemaTableName table, Set<String> columns) {
+    public Set<String> filterColumns(SystemSecurityContext context, CatalogSchemaTableName table,
+            Set<String> columns) {
         return columns.parallelStream().filter(column -> canAccessColumn(context, table, column))
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public Set<String> filterViewQueryOwnedBy(SystemSecurityContext context, Set<String> queryOwners) {
+    public Set<String> filterViewQueryOwnedBy(SystemSecurityContext context,
+            Set<String> queryOwners) {
         return queryOwners.parallelStream().filter(owner -> canViewQueryOwnedBy(context, owner))
                 .collect(Collectors.toSet());
     }
 
     @Override
     public void checkCanShowSchemas(SystemSecurityContext context, String catalogName) {
-        if (!queryOpa("can_show_schemas", context, new OpaQueryRequest(new OpaTable(catalogName)))) {
+        if (!queryOpa("can_show_schemas", context,
+                new OpaQueryRequest(new OpaTable(catalogName)))) {
             AccessDeniedException.denyShowSchemas(" of catalog " + catalogName);
         }
     }
@@ -229,17 +234,19 @@ public class OpaAuthorizer implements SystemAccessControl {
     @Override
     public void checkCanShowTables(SystemSecurityContext context, CatalogSchemaName schema) {
         if (!queryOpa("can_show_tables", context, new OpaQueryRequest(new OpaTable(schema)))) {
-            AccessDeniedException.denyShowTables(schema.getSchemaName(), " in catalog " + schema.getCatalogName());
+            AccessDeniedException.denyShowTables(schema.getSchemaName(),
+                    " in catalog " + schema.getCatalogName());
         }
     }
 
     @Override
-    public void checkCanSelectFromColumns(SystemSecurityContext context, CatalogSchemaTableName table,
-            Set<String> columns) {
+    public void checkCanSelectFromColumns(SystemSecurityContext context,
+            CatalogSchemaTableName table, Set<String> columns) {
         OpaQueryRequest request = new OpaQueryRequest(new OpaTable(table));
         request.columns = columns;
         if (!queryOpa("can_select_from_columns", context, request)) {
-            AccessDeniedException.denySelectColumns(table.getSchemaTableName().getTableName(), columns);
+            AccessDeniedException.denySelectColumns(table.getSchemaTableName().getTableName(),
+                    columns);
         }
     }
 }
