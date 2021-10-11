@@ -1,0 +1,18 @@
+= trino-opa-authorizer
+
+== Usage
+
+
+=== OPA
+
+Currently expects that Open Policy Agent is listening on http://localhost:8181. Run `opa run --server example.rego` in the repo folder
+to test an initial example.
+
+=== Trino plugin
+
+Assuming that you already have a Trino server set up.
+
+1. Run `mvn package`
+2. Copy (or symlink) `target/out` to `$TRINO_DIR/plugins/trino-opa-authorizer`
+3. Copy (or symlink) `access-control.properties` to `$TRINO_DIR/etc/access-control.properties`
+4. Start Trino
