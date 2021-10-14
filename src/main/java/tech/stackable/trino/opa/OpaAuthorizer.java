@@ -23,10 +23,10 @@ public class OpaAuthorizer implements SystemAccessControl {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper json = new ObjectMapper();
 
-    private final URI opaApiUri;
+    private final URI opaPolicyUri;
 
     public OpaAuthorizer(URI opaApiUri) {
-        this.opaApiUri = opaApiUri;
+        this.opaPolicyUri = opaApiUri;
     }
 
     @SuppressWarnings("unused")
@@ -113,20 +113,19 @@ public class OpaAuthorizer implements SystemAccessControl {
         HttpResponse<String> response;
         try {
             response = httpClient.send(
-                    HttpRequest.newBuilder(opaApiUri.resolve("v1/data/trino/" + policyName))
-                            .header("Content-Type", "application/json")
+                    HttpRequest.newBuilder(opaPolicyUri.resolve(policyName)).header("Content-Type", "application/json")
                             .POST(HttpRequest.BodyPublishers.ofByteArray(queryJson)).build(),
                     HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
             throw new OpaQueryException.QueryFailed(e);
         }
         switch (response.statusCode()) {
-            case 200:
-                break;
-            case 404:
-                throw new OpaQueryException.PolicyNotFound(policyName);
-            default:
-                throw new OpaQueryException.OpaServerError(policyName, response);
+        case 200:
+            break;
+        case 404:
+            throw new OpaQueryException.PolicyNotFound(policyName);
+        default:
+            throw new OpaQueryException.OpaServerError(policyName, response);
         }
         String responseBody = response.body();
         OpaQueryResult result;
