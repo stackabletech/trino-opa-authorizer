@@ -12,7 +12,7 @@ public abstract class OpaConfigException extends RuntimeException {
 
         public UriRequired() {
             super("No Open Policy Agent URI provided (must be set in access control property "
-                    + OpaAuthorizerPlugin.CONFIG_OPA_URI + ")", null);
+                    + OpaAuthorizerPlugin.CONFIG_OPA_POLICY_URI + ")", null);
         }
     }
 
@@ -20,7 +20,7 @@ public abstract class OpaConfigException extends RuntimeException {
         private static final long serialVersionUID = 2753800944632029653L;
 
         public UriInvalid(String uri, Throwable cause) {
-            super("Open Policy Agent URI is invalid (see access control property " + OpaAuthorizerPlugin.CONFIG_OPA_URI
+            super("Open Policy Agent URI is invalid (see access control property " + OpaAuthorizerPlugin.CONFIG_OPA_POLICY_URI
                     + "): " + uri, cause);
         }
     }
