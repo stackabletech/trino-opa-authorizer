@@ -85,7 +85,7 @@ public class OpaAuthorizerTest {
         Session session = Session.builder(sessionPropertyManager)
                 .setQueryId(idGen.createNextQueryId()).setIdentity(identity).build();
         trinoServer = TestingTrinoServer.builder()
-                .setSystemAccessControls(Collections.singletonList(new OpaAuthorizer(opaServerUri)))
+                .setSystemAccessControls(Collections.singletonList(new OpaAuthorizer(opaServerUri.resolve("v1/data/trino/"))))
                 .build();
         trinoClient = new TestingTrinoClient(trinoServer, session);
     }
