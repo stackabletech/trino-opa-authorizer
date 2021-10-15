@@ -9,7 +9,7 @@ import io.trino.spi.security.SystemAccessControl;
 import io.trino.spi.security.SystemAccessControlFactory;
 
 public class OpaAuthorizerPlugin implements Plugin {
-    static final String CONFIG_OPA_URI = "opa.uri";
+    static final String CONFIG_OPA_POLICY_URI = "opa.policy.uri";
 
     @Override
     public Iterable<SystemAccessControlFactory> getSystemAccessControlFactories() {
@@ -21,7 +21,7 @@ public class OpaAuthorizerPlugin implements Plugin {
 
             @Override
             public SystemAccessControl create(Map<String, String> config) {
-                String opaUriStr = config.get(CONFIG_OPA_URI);
+                String opaUriStr = config.get(CONFIG_OPA_POLICY_URI);
                 if (opaUriStr == null) {
                     throw new OpaConfigException.UriRequired();
                 }
