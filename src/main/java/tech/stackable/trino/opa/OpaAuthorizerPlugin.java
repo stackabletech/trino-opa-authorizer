@@ -28,7 +28,7 @@ public class OpaAuthorizerPlugin implements Plugin {
                 URI opaUri;
                 try {
                     opaUri = URI.create(opaUriStr);
-                } catch(Exception e) {
+                } catch (Exception e) {
                     throw new OpaConfigException.UriInvalid(opaUriStr, e);
                 }
                 return new OpaAuthorizer(opaUri);
