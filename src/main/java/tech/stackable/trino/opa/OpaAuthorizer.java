@@ -25,8 +25,8 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     private final URI opaPolicyUri;
 
-    public OpaAuthorizer(URI opaApiUri) {
-        this.opaPolicyUri = opaApiUri;
+    public OpaAuthorizer(URI opaPolicyUri) {
+        this.opaPolicyUri = opaPolicyUri;
     }
 
     @SuppressWarnings("unused")
