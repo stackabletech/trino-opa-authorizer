@@ -16,3 +16,7 @@ Assuming that you already have a Trino server set up.
 2. Copy (or symlink) `target/out` to `$TRINO_DIR/plugins/trino-opa-authorizer`
 3. Copy (or symlink) `access-control.properties` to `$TRINO_DIR/etc/access-control.properties`
 4. Start Trino
+
+=== Tests
+
+The tests assume that OPA is available on your path as `opa`, and can then be executed by running `mvn test`.

@@ -20,8 +20,8 @@ public abstract class OpaConfigException extends RuntimeException {
         private static final long serialVersionUID = 2753800944632029653L;
 
         public UriInvalid(String uri, Throwable cause) {
-            super("Open Policy Agent URI is invalid (see access control property " + OpaAuthorizerPlugin.CONFIG_OPA_POLICY_URI
-                    + "): " + uri, cause);
+            super("Open Policy Agent URI is invalid (see access control property "
+                    + OpaAuthorizerPlugin.CONFIG_OPA_POLICY_URI + "): " + uri, cause);
         }
     }
 }
