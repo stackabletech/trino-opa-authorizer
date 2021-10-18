@@ -120,12 +120,12 @@ public class OpaAuthorizer implements SystemAccessControl {
             throw new OpaQueryException.QueryFailed(e);
         }
         switch (response.statusCode()) {
-        case 200:
-            break;
-        case 404:
-            throw new OpaQueryException.PolicyNotFound(policyName);
-        default:
-            throw new OpaQueryException.OpaServerError(policyName, response);
+            case 200:
+                break;
+            case 404:
+                throw new OpaQueryException.PolicyNotFound(policyName);
+            default:
+                throw new OpaQueryException.OpaServerError(policyName, response);
         }
         String responseBody = response.body();
         OpaQueryResult result;
@@ -228,7 +228,7 @@ public class OpaAuthorizer implements SystemAccessControl {
     @Override
     public void checkCanShowTables(SystemSecurityContext context, CatalogSchemaName schema) {
         if (!queryOpa("can_show_tables", context, new OpaQueryRequest(new OpaTable(schema)))) {
-            AccessDeniedException.denyShowTables(schema.getSchemaName(), " in catalog " + schema.getCatalogName());
+            AccessDeniedException.denyShowTables(schema.toString());
         }
     }
 
@@ -238,7 +238,35 @@ public class OpaAuthorizer implements SystemAccessControl {
         OpaQueryRequest request = new OpaQueryRequest(new OpaTable(table));
         request.columns = columns;
         if (!queryOpa("can_select_from_columns", context, request)) {
-            AccessDeniedException.denySelectColumns(table.getSchemaTableName().getTableName(), columns);
+            AccessDeniedException.denySelectColumns(table.toString(), columns);
+        }
+    }
+
+    @Override
+    public void checkCanCreateSchema(SystemSecurityContext context, CatalogSchemaName schema) {
+        if (!queryOpa("can_create_schema", context, new OpaQueryRequest(new OpaTable(schema)))) {
+            AccessDeniedException.denyCreateSchema(schema.toString());
+        }
+    }
+
+    @Override
+    public void checkCanDropSchema(SystemSecurityContext context, CatalogSchemaName schema) {
+        if (!queryOpa("can_drop_schema", context, new OpaQueryRequest(new OpaTable(schema)))) {
+            AccessDeniedException.denyDropSchema(schema.toString());
+        }
+    }
+
+    @Override
+    public void checkCanCreateTable(SystemSecurityContext context, CatalogSchemaTableName table) {
+        if (!queryOpa("can_create_table", context, new OpaQueryRequest(new OpaTable(table)))) {
+            AccessDeniedException.denyCreateTable(table.toString());
+        }
+    }
+
+    @Override
+    public void checkCanDropTable(SystemSecurityContext context, CatalogSchemaTableName table) {
+        if (!queryOpa("can_drop_table", context, new OpaQueryRequest(new OpaTable(table)))) {
+            AccessDeniedException.denyDropTable(table.toString());
         }
     }
 }

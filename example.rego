@@ -4,7 +4,15 @@ can_execute_query = true
 
 can_access_catalog = true
 
+can_create_schema = true
+
+can_drop_schema = true
+
 can_access_schema = true
+
+can_create_table = true
+
+can_drop_table = true
 
 can_access_table = true
 
