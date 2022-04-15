@@ -6,7 +6,7 @@
 
     <groupId>tech.stackable.trino</groupId>
     <artifactId>trino-opa-authorizer</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>376</version>
 
     <name>trino-opa-authorizer</name>
     <!-- FIXME change it to the project's website -->
@@ -28,13 +28,13 @@
         <dependency>
             <groupId>io.trino</groupId>
             <artifactId>trino-spi</artifactId>
-            <version>363</version>
+            <version>376</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.trino</groupId>
             <artifactId>trino-testing</artifactId>
-            <version>363</version>
+            <version>376</version>
             <scope>test</scope>
         </dependency>
         <dependency>
