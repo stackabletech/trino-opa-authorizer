@@ -2,21 +2,14 @@ package tech.stackable.trino.opa;
 
 import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.security.Identity;
+import io.trino.spi.security.TrinoPrincipal;
 
 public class OpaQueryInputResource {
-    public enum Type {
-        USER,
-        SYSTEM_INFORMATION,
-        QUERY,
-        CATALOG,
-        SCHEMA,
-        TABLE,
-        VIEW,
-        ROLE,
-        PROCEDURE,
-        FUNCTION,
-        SYSTEM_SESSION_PROPERTY
-    }
+    private User user;
+    private Query query;
+    private SystemSessionProperty systemSessionProperty;
+    private Catalog catalog;
+    private Schema schema;
 
     public static class User {
         private String name;
@@ -38,36 +31,40 @@ public class OpaQueryInputResource {
         public Catalog(String name) { this.name = name; }
     }
 
-    public static class CatalogSchema {
-        private CatalogSchemaName catalogSchema;
-        public Catalog(String name) { this.name = name; }
+    public static class Schema {
+        private CatalogSchemaName schema;
+        private String newSchemaName;
+        private TrinoPrincipal principal;
+        private String catalogName;
+
+        public Schema(CatalogSchemaName schema) { this.schema = schema; }
+
+        public Schema(String catalogName) { this.catalogName = catalogName; }
+        public Schema(CatalogSchemaName schema, String newSchemaName) {
+            this.schema = schema;
+            this.newSchemaName = newSchemaName;
+        }
+        public Schema(CatalogSchemaName schema, TrinoPrincipal principal) {
+            this.schema = schema;
+            this.principal = principal;
+        }
     }
 
-    private Type type;
-    private User user;
-    private Query query;
-    private SystemSessionProperty systemSessionProperty;
-
-    private Catalog catalog;
 
     private OpaQueryInputResource(OpaQueryInputResource.Builder builder) {
-        this.type = builder.type;
         this.user = builder.user;
         this.query = builder.query;
         this.systemSessionProperty = builder.systemSessionProperty;
         this.catalog = builder.catalog;
+        this.schema = builder.schema;
     }
 
     public static class Builder {
-        private Type type;
         private User user;
         private Query query;
         private SystemSessionProperty systemSessionProperty;
         private Catalog catalog;
-
-        public Builder(Type type) {
-            this.type = type;
-        }
+        private Schema schema;
 
         public Builder user(User user) {
             this.user = user;
@@ -86,6 +83,11 @@ public class OpaQueryInputResource {
 
         public Builder catalog(Catalog catalog) {
             this.catalog = catalog;
+            return this;
+        }
+
+        public Builder schema(Schema schema) {
+            this.schema = schema;
             return this;
         }
 

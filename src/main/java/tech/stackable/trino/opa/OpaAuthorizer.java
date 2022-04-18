@@ -38,6 +38,15 @@ public class OpaAuthorizer implements SystemAccessControl {
         public Boolean result;
     }
 
+    private String getCurrentMethodName() {
+        StackWalker walker = StackWalker.getInstance();
+        Optional<String> methodName = walker.walk(frames -> frames
+                .findFirst()
+                .map(StackWalker.StackFrame::getMethodName));
+
+        return methodName.get();
+    }
+
     private boolean queryOpa(OpaQueryInput input) {
         String policyName = "allow";
         byte[] queryJson;
@@ -78,17 +87,9 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanImpersonateUser(SystemSecurityContext context, String userName) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.IMPERSONATE;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.USER;
-
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder(operation)
-                        .resource(new OpaQueryInputResource.Builder(resource)
-                                .user(new OpaQueryInputResource.User(userName))
-                                .build()
-                        ).build()
-                )
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().user(new OpaQueryInputResource.User(userName)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanImpersonateUser(context, userName);
@@ -97,15 +98,8 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanExecuteQuery(SystemSecurityContext context) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.EXECUTE;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.QUERY;
-
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder(operation)
-                        .resource(new OpaQueryInputResource.Builder(resource).build())
-                        .build()
-                )
-                .build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName());
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanExecuteQuery(context);
@@ -114,18 +108,9 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanViewQueryOwnedBy(SystemSecurityContext context, Identity queryOwner) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.READ;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.QUERY;
-
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder(operation)
-                        .resource(new OpaQueryInputResource.Builder(resource)
-                                .query(new OpaQueryInputResource.Query(queryOwner))
-                                .build()
-                        )
-                        .build()
-                )
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().query(new OpaQueryInputResource.Query(queryOwner)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanViewQueryOwnedBy(context, queryOwner);
@@ -134,35 +119,18 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public Collection<Identity> filterViewQueryOwnedBy(SystemSecurityContext context, Collection<Identity> queryOwners) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.FILTER;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.QUERY;
-
-        return queryOwners.parallelStream().filter(queryOwner -> queryOpa(new OpaQueryInput.Builder(context)
-                        .action(new OpaQueryInputAction.Builder(operation)
-                                .resource(new OpaQueryInputResource.Builder(resource)
-                                        .query(new OpaQueryInputResource.Query(queryOwner))
-                                        .build()
-                                )
-                                .build()
-                        )
-                        .build())
-                )
+        return queryOwners.parallelStream().filter(queryOwner -> queryOpa(
+                new OpaQueryInput(context,
+                        new OpaQueryInputAction(getCurrentMethodName(), new OpaQueryInputResource.Builder()
+                                .query(new OpaQueryInputResource.Query(queryOwner)).build()))))
                 .collect(Collectors.toSet());
     }
 
     @Override
     public void checkCanKillQueryOwnedBy(SystemSecurityContext context, Identity queryOwner) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.KILL;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.QUERY;
-
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder(operation)
-                        .resource(new OpaQueryInputResource.Builder(resource)
-                                .query(new OpaQueryInputResource.Query(queryOwner))
-                                .build()
-                        ).build()
-                )
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().query(new OpaQueryInputResource.Query(queryOwner)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanKillQueryOwnedBy(context, queryOwner);
@@ -171,16 +139,8 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanReadSystemInformation(SystemSecurityContext context) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.READ;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.SYSTEM_INFORMATION;
-
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder(operation)
-                        .resource(new OpaQueryInputResource.Builder(resource)
-                                .build()
-                        ).build()
-                )
-                .build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName());
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanReadSystemInformation(context);
@@ -189,16 +149,8 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanWriteSystemInformation(SystemSecurityContext context) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.WRITE;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.SYSTEM_INFORMATION;
-
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder(operation)
-                        .resource(new OpaQueryInputResource.Builder(resource)
-                                .build()
-                        ).build()
-                )
-                .build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName());
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanWriteSystemInformation(context);
@@ -207,17 +159,9 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanSetSystemSessionProperty(SystemSecurityContext context, String propertyName) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.SET;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.SYSTEM_SESSION_PROPERTY;
-
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder(operation)
-                        .resource(new OpaQueryInputResource.Builder(resource)
-                                .systemSessionProperty(new OpaQueryInputResource.SystemSessionProperty(propertyName))
-                                .build()
-                        ).build()
-                )
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().systemSessionProperty(new OpaQueryInputResource.SystemSessionProperty(propertyName)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanSetSystemSessionProperty(context, propertyName);
@@ -226,17 +170,9 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanAccessCatalog(SystemSecurityContext context, String catalogName) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.ACCESS;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.CATALOG;
-
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder(operation)
-                        .resource(new OpaQueryInputResource.Builder(resource)
-                                .catalog(new OpaQueryInputResource.Catalog(catalogName))
-                                .build()
-                        ).build()
-                )
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().catalog(new OpaQueryInputResource.Catalog(catalogName)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanAccessCatalog(context, catalogName);
@@ -245,29 +181,18 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public Set<String> filterCatalogs(SystemSecurityContext context, Set<String> catalogs) {
-        OpaQueryInputAction.Operation operation = OpaQueryInputAction.Operation.FILTER;
-        OpaQueryInputResource.Type resource = OpaQueryInputResource.Type.CATALOG;
-
-        return catalogs.parallelStream().filter(catalog -> queryOpa(new OpaQueryInput.Builder(context)
-                        .action(new OpaQueryInputAction.Builder(operation)
-                                .resource(new OpaQueryInputResource.Builder(resource)
-                                        .catalog(new OpaQueryInputResource.Catalog(catalog))
-                                        .build()
-                                )
-                                .build()
-                        )
-                        .build())
-                )
+        return catalogs.parallelStream().filter(catalog -> queryOpa(
+                        new OpaQueryInput(context,
+                                new OpaQueryInputAction(getCurrentMethodName(), new OpaQueryInputResource.Builder()
+                                        .catalog(new OpaQueryInputResource.Catalog(catalog)).build()))))
                 .collect(Collectors.toSet());
     }
 
     @Override
     public void checkCanCreateSchema(SystemSecurityContext context, CatalogSchemaName schema) {
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder("checkCanCreateSchema")
-                        .catalogSchemaName(schema)
-                        .build())
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().schema(new OpaQueryInputResource.Schema(schema)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanCreateSchema(context, schema);
@@ -276,11 +201,9 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanDropSchema(SystemSecurityContext context, CatalogSchemaName schema) {
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder("checkCanDropSchema")
-                        .catalogSchemaName(schema)
-                        .build())
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().schema(new OpaQueryInputResource.Schema(schema)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanDropSchema(context, schema);
@@ -289,12 +212,9 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanRenameSchema(SystemSecurityContext context, CatalogSchemaName schema, String newSchemaName) {
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder("checkCanRenameSchema")
-                        .catalogSchemaName(schema)
-                        .newSchemaName(newSchemaName)
-                        .build())
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().schema(new OpaQueryInputResource.Schema(schema, newSchemaName)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanRenameSchema(context, schema, newSchemaName);
@@ -303,12 +223,9 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanSetSchemaAuthorization(SystemSecurityContext context, CatalogSchemaName schema, TrinoPrincipal principal) {
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder("checkCanSetSchemaAuthorization")
-                        .catalogSchemaName(schema)
-                        .principal(principal)
-                        .build())
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().schema(new OpaQueryInputResource.Schema(schema, principal)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanSetSchemaAuthorization(context, schema, principal);
@@ -317,11 +234,9 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public void checkCanShowSchemas(SystemSecurityContext context, String catalogName) {
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder("checkCanShowSchemas")
-                        .catalogName(catalogName)
-                        .build())
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().schema(new OpaQueryInputResource.Schema(catalogName)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanShowSchemas(context, catalogName);
@@ -330,21 +245,18 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     @Override
     public Set<String> filterSchemas(SystemSecurityContext context, String catalogName, Set<String> schemaNames) {
-        return schemaNames.parallelStream().filter(schemaName -> queryOpa(new OpaQueryInput.Builder(context)
-                        .action(new OpaQueryInputAction.Builder("filterSchemas")
-                                .catalogSchemaName(new CatalogSchemaName(catalogName, schemaName))
-                                .build())
-                        .build()))
+        return schemaNames.parallelStream().filter(schemaName -> queryOpa(
+                        new OpaQueryInput(context,
+                                new OpaQueryInputAction(getCurrentMethodName(), new OpaQueryInputResource.Builder()
+                                        .schema(new OpaQueryInputResource.Schema(new CatalogSchemaName(catalogName, schemaName))).build()))))
                 .collect(Collectors.toSet());
     }
 
     @Override
     public void checkCanShowCreateSchema(SystemSecurityContext context, CatalogSchemaName schemaName) {
-        OpaQueryInput input = new OpaQueryInput.Builder(context)
-                .action(new OpaQueryInputAction.Builder("checkCanShowCreateSchema")
-                        .catalogSchemaName(schemaName)
-                        .build())
-                .build();
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().schema(new OpaQueryInputResource.Schema(schemaName)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction(getCurrentMethodName(), resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanShowCreateSchema(context, schemaName);
