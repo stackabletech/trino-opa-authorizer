@@ -75,7 +75,7 @@ Splits: 1 total, 1 done (100.00%)
 0.22 [0 rows, 0B] [0 rows/s, 0B/s]
 
 ----
-but should get a permission denied when e.g. showing schemas:
+but should get an `Access Denied` failure when e.g. showing schemas:
 ----
 trino> SHOW SCHEMAS From system;
 Query 20220419_161650_00046_bu682 failed: Access Denied: Cannot show schemas
