@@ -6,11 +6,6 @@ public class OpaQueryInput {
     public final SystemSecurityContext context;
     public final OpaQueryInputAction action;
 
-    public OpaQueryInput(SystemSecurityContext context) {
-        this.context = context;
-        this.action = null;
-    }
-
     public OpaQueryInput(SystemSecurityContext context, OpaQueryInputAction action) {
         this.context = context;
         this.action = action;

@@ -36,6 +36,7 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     private static class OpaQuery {
         public OpaQueryInput input;
+
         public OpaQuery(OpaQueryInput input) {
             this.input = input;
         }
@@ -48,7 +49,6 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     private boolean queryOpa(OpaQueryInput input) {
         byte[] queryJson;
-
         OpaQuery query = new OpaQuery(input);
 
         try {
@@ -137,9 +137,9 @@ public class OpaAuthorizer implements SystemAccessControl {
     @Override
     public Collection<Identity> filterViewQueryOwnedBy(SystemSecurityContext context, Collection<Identity> queryOwners) {
         return queryOwners.parallelStream().filter(queryOwner -> queryOpa(
-                new OpaQueryInput(context,
-                        new OpaQueryInputAction("FilterViewQueryOwnedBy", new OpaQueryInputResource.Builder()
-                                .query(new OpaQueryInputResource.Query(queryOwner)).build()))))
+                        new OpaQueryInput(context,
+                                new OpaQueryInputAction("FilterViewQueryOwnedBy", new OpaQueryInputResource.Builder()
+                                        .query(new OpaQueryInputResource.Query(queryOwner)).build()))))
                 .collect(Collectors.toSet());
     }
 
@@ -328,7 +328,7 @@ public class OpaAuthorizer implements SystemAccessControl {
     public void checkCanSetTableProperties(SystemSecurityContext context, CatalogSchemaTableName table, Map<String, Optional<Object>> properties) {
         HashMap transformed_properties = new HashMap<String, String>();
         for (Map.Entry<String, Optional<Object>> entry : properties.entrySet()) {
-             transformed_properties.put(entry.getKey(), entry.getValue().orElse(""));
+            transformed_properties.put(entry.getKey(), entry.getValue().orElse(""));
         }
 
         OpaQueryInputResource resource = new OpaQueryInputResource.Builder().table(new OpaQueryInputResource.Table(table, transformed_properties)).build();
