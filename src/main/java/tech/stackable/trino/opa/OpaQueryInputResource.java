@@ -199,18 +199,14 @@ public class OpaQueryInputResource {
 
         public Role(String name, Optional<TrinoPrincipal> grantor) {
             this.name = name;
-            if (grantor.isPresent()) {
-                this.grantor = grantor.get();
-            }
+            this.grantor = grantor.orElse(null);
         }
 
         public Role(Set<String> roles, Set<TrinoPrincipal> grantees, boolean adminOption, Optional<TrinoPrincipal> grantor) {
             this.names = roles;
             this.grantees = grantees;
             this.adminOption = adminOption;
-            if (grantor.isPresent()) {
-                this.grantor = grantor.get();
-            }
+            this.grantor = grantor.orElse(null);
         }
     }
 
