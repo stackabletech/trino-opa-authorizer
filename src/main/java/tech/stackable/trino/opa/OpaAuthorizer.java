@@ -8,8 +8,10 @@ import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
@@ -20,11 +22,23 @@ import io.trino.spi.type.Type;
 
 public class OpaAuthorizer implements SystemAccessControl {
     private final HttpClient httpClient = HttpClient.newHttpClient();
-    private final ObjectMapper json = new ObjectMapper();
+    private final ObjectMapper json;
     private final URI opaPolicyUri;
 
     public OpaAuthorizer(URI opaPolicyUri) {
         this.opaPolicyUri = opaPolicyUri;
+        this.json = new ObjectMapper();
+        // do not include null values
+        this.json.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        // deal with Optional<T> values
+        this.json.registerModule(new Jdk8Module());
+    }
+
+    private static class OpaQuery {
+        public OpaQueryInput input;
+        public OpaQuery(OpaQueryInput input) {
+            this.input = input;
+        }
     }
 
     private static class OpaQueryResult {
@@ -33,20 +47,19 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     private boolean queryOpa(OpaQueryInput input) {
-        String policyName = "allow";
         byte[] queryJson;
 
-        System.out.println(input.toString());
+        OpaQuery query = new OpaQuery(input);
 
         try {
-            queryJson = json.writeValueAsBytes(input);
+            queryJson = json.writeValueAsBytes(query);
         } catch (JsonProcessingException e) {
             throw new OpaQueryException.SerializeFailed(e);
         }
         HttpResponse<String> response;
         try {
             response = httpClient.send(
-                    HttpRequest.newBuilder(opaPolicyUri.resolve(policyName)).header("Content-Type", "application/json")
+                    HttpRequest.newBuilder(opaPolicyUri).header("Content-Type", "application/json")
                             .POST(HttpRequest.BodyPublishers.ofByteArray(queryJson)).build(),
                     HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
@@ -56,9 +69,9 @@ public class OpaAuthorizer implements SystemAccessControl {
             case 200:
                 break;
             case 404:
-                throw new OpaQueryException.PolicyNotFound(policyName);
+                throw new OpaQueryException.PolicyNotFound(opaPolicyUri.toString());
             default:
-                throw new OpaQueryException.OpaServerError(policyName, response);
+                throw new OpaQueryException.OpaServerError(opaPolicyUri.toString(), response);
         }
         String responseBody = response.body();
         OpaQueryResult result;
@@ -68,7 +81,7 @@ public class OpaAuthorizer implements SystemAccessControl {
             throw new OpaQueryException.DeserializeFailed(e);
         }
         if (result.result == null) {
-            throw new OpaQueryException.PolicyNotFound(policyName);
+            return false;
         }
         return result.result;
     }
@@ -85,14 +98,19 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     @Override
+    // TODO: This method is still called even if deprecated. We just call the checkImpersonateUser method which it replaces.
     public void checkCanSetUser(Optional<Principal> principal, String userName) {
-        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().user(new OpaQueryInputResource.User(userName)).build();
-        OpaQueryInputAction action = new OpaQueryInputAction("SetUser", resource);
-        OpaQueryInput input = new OpaQueryInput(null, action);
+        SystemSecurityContext context = new SystemSecurityContext(new Identity.Builder(userName).withPrincipal(principal).build(), Optional.empty());
+        checkCanImpersonateUser(context, userName);
 
-        if (!queryOpa(input)) {
-            AccessDeniedException.denySetUser(principal, userName);
-        }
+//        SystemSecurityContext context = new SystemSecurityContext(new Identity.Builder(userName).withPrincipal(principal).build(), Optional.empty());
+//        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().user(new OpaQueryInputResource.User(userName)).build();
+//        OpaQueryInputAction action = new OpaQueryInputAction("SetUser", resource);
+//        OpaQueryInput input = new OpaQueryInput(context, action);
+//
+//        if (!queryOpa(input)) {
+//            AccessDeniedException.denySetUser(principal, userName);
+//        }
     }
 
     @Override

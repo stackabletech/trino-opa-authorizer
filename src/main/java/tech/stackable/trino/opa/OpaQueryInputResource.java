@@ -12,35 +12,35 @@ import java.util.Optional;
 import java.util.Set;
 
 public class OpaQueryInputResource {
-    private User user;
-    private Query query;
-    private SystemSessionProperty systemSessionProperty;
-    private Catalog catalog;
-    private CatalogSchema schema;
-    private Table table;
-    private View view;
-    private Authorization authorization;
-    private Role role;
-    private Execution execution;
+    public User user;
+    public Query query;
+    public SystemSessionProperty systemSessionProperty;
+    public Catalog catalog;
+    public CatalogSchema schema;
+    public Table table;
+    public View view;
+    public Authorization authorization;
+    public Role role;
+    public Execution execution;
 
     public static class User {
-        private String name;
+        public String name;
         public User(String name) { this.name = name; }
     }
 
     public static class Query {
-        private Identity owner;
+        public Identity owner;
         public Query(Identity owner) { this.owner = owner; }
     }
 
     public static class SystemSessionProperty {
-        private String property;
+        public String property;
         public SystemSessionProperty(String property) { this.property = property; }
     }
 
     public static class Catalog {
-        private String name;
-        private String propertyName;
+        public String name;
+        public String propertyName;
         public Catalog(String name) { this.name = name; }
 
         public Catalog(String name, String propertyName) {
@@ -50,10 +50,10 @@ public class OpaQueryInputResource {
     }
 
     public static class CatalogSchema {
-        private CatalogSchemaName catalogSchemaName;
-        private String newCatalogSchemaName;
-        private TrinoPrincipal principal;
-        private String catalogName;
+        public CatalogSchemaName catalogSchemaName;
+        public String newCatalogSchemaName;
+        public TrinoPrincipal principal;
+        public String catalogName;
 
         public CatalogSchema(CatalogSchemaName schema) { this.catalogSchemaName = schema; }
 
@@ -70,14 +70,14 @@ public class OpaQueryInputResource {
     }
 
     public static class Table {
-        private String catalogName;
-        private CatalogSchemaTableName catalogSchemaTableName;
-        private Map<String, Object> properties;
-        private CatalogSchemaTableName newCatalogSchemaTableName;
-        private SchemaTableName schemaTableName;
-        private String column;
-        private TrinoPrincipal principal;
-        private Set<String> columns;
+        public String catalogName;
+        public CatalogSchemaTableName catalogSchemaTableName;
+        public Map<String, Object> properties;
+        public CatalogSchemaTableName newCatalogSchemaTableName;
+        public SchemaTableName schemaTableName;
+        public String column;
+        public TrinoPrincipal principal;
+        public Set<String> columns;
 
         public Table(CatalogSchemaTableName catalogSchemaTableName) {
             this.catalogSchemaTableName = catalogSchemaTableName;
@@ -114,11 +114,11 @@ public class OpaQueryInputResource {
     }
 
     public static class View {
-        private CatalogSchemaTableName view;
-        private CatalogSchemaTableName newView;
-        private TrinoPrincipal principal;
-        private Set<String> columns;
-        private Map<String, Object> properties;
+        public CatalogSchemaTableName view;
+        public CatalogSchemaTableName newView;
+        public TrinoPrincipal principal;
+        public Set<String> columns;
+        public Map<String, Object> properties;
 
         public View(CatalogSchemaTableName view) {
             this.view = view;
@@ -146,12 +146,12 @@ public class OpaQueryInputResource {
     }
 
     public static class Authorization {
-        private String functionName;
-        private TrinoPrincipal grantee;
-        private boolean grantOption;
-        private CatalogSchemaName schema;
-        private io.trino.spi.security.Privilege privilege;
-        private CatalogSchemaTableName table;
+        public String functionName;
+        public TrinoPrincipal grantee;
+        public boolean grantOption;
+        public CatalogSchemaName schema;
+        public io.trino.spi.security.Privilege privilege;
+        public CatalogSchemaTableName table;
 
         public Authorization(String functionName, TrinoPrincipal grantee, boolean grantOption) {
             this.functionName = functionName;
@@ -187,11 +187,11 @@ public class OpaQueryInputResource {
     }
 
     public static class Role {
-        private String name;
-        private TrinoPrincipal grantor;
-        private Set<String> names;
-        private Set<TrinoPrincipal> grantees;
-        private boolean adminOption;
+        public String name;
+        public TrinoPrincipal grantor;
+        public Set<String> names;
+        public Set<TrinoPrincipal> grantees;
+        public boolean adminOption;
 
         public Role(String name) {
             this.name = name;
@@ -215,10 +215,10 @@ public class OpaQueryInputResource {
     }
 
     public static class Execution {
-        private CatalogSchemaRoutineName routine;
-        private String functionName;
-        private String procedure;
-        private CatalogSchemaTableName table;
+        public CatalogSchemaRoutineName routine;
+        public String functionName;
+        public String procedure;
+        public CatalogSchemaTableName table;
         public Execution(CatalogSchemaRoutineName routine) {
             this.routine = routine;
         }
@@ -233,7 +233,7 @@ public class OpaQueryInputResource {
         }
     }
 
-    private OpaQueryInputResource(OpaQueryInputResource.Builder builder) {
+    public OpaQueryInputResource(OpaQueryInputResource.Builder builder) {
         this.user = builder.user;
         this.query = builder.query;
         this.systemSessionProperty = builder.systemSessionProperty;

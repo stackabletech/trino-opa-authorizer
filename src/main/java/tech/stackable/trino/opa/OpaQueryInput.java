@@ -3,8 +3,8 @@ package tech.stackable.trino.opa;
 import io.trino.spi.security.SystemSecurityContext;
 
 public class OpaQueryInput {
-    private final SystemSecurityContext context;
-    private final OpaQueryInputAction action;
+    public final SystemSecurityContext context;
+    public final OpaQueryInputAction action;
 
     public OpaQueryInput(SystemSecurityContext context) {
         this.context = context;
