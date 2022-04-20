@@ -25,32 +25,7 @@ The tests assume that OPA is available on your path as `opa`, and can then be ex
 The example `example.rego` allows the `admin` user to do everything. User `bob` is limited to run queries and access catalogs.
 
 ----
-package trino
-
-import future.keywords.in
-
-default allow = false
-
-allow {
-	is_admin
-}
-
-allow {
-	is_bob
-	can_be_accessed_by_bob
-}
-
-is_admin() {
-	input.context.identity.user == "admin"
-}
-
-is_bob() {
-	input.context.identity.user == "bob"
-}
-
-can_be_accessed_by_bob() {
-    input.action.operation in ["ImpersonateUser", "FilterCatalogs", "AccessCatalog", "ExecuteQuery"]
-}
+include::example.rego[]
 ----
 
 This can be tested via the Trino CLI for the `admin` user:
@@ -79,3 +54,4 @@ but should get an `Access Denied` failure when e.g. showing schemas:
 ----
 trino> SHOW SCHEMAS From system;
 Query 20220419_161650_00046_bu682 failed: Access Denied: Cannot show schemas
+----
