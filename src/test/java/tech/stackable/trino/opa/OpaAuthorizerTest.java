@@ -80,18 +80,18 @@ public class OpaAuthorizerTest {
                 URI.create("http://" + opaSocket.getHostString() + ":" + opaSocket.getPort() + "/");
 
         QueryIdGenerator idGen = new QueryIdGenerator();
-        Identity identity = Identity.forUser("test-user").build();
+        Identity identity = Identity.forUser("bob").build();
         SessionPropertyManager sessionPropertyManager = new SessionPropertyManager();
         Session session = Session.builder(sessionPropertyManager)
                 .setQueryId(idGen.createNextQueryId()).setIdentity(identity).build();
         trinoServer = TestingTrinoServer.builder()
-                .setSystemAccessControls(Collections.singletonList(new OpaAuthorizer(opaServerUri.resolve("v1/data/trino/"))))
+                .setSystemAccessControls(Collections.singletonList(new OpaAuthorizer(opaServerUri.resolve("v1/data/trino/allow"))))
                 .build();
         trinoClient = new TestingTrinoClient(trinoServer, session);
     }
 
     @AfterAll
-    public static void teardownTrino() throws IOException, InterruptedException {
+    public static void teardownTrino() throws IOException {
         try {
             if (opaServer != null) {
                 opaServer.destroy();
@@ -132,33 +132,49 @@ public class OpaAuthorizerTest {
 
     @Test
     public void testShouldAllowQueryIfDirected() throws IOException, InterruptedException {
-        submitPolicy("package trino", "default can_execute_query = true",
-                "default can_access_catalog = false",
-                "can_access_catalog { input.request.table.catalog == \"system\" }",
-                "default can_show_tables = true", "default can_select_from_columns = false",
-                "can_select_from_columns { can_access_table }", "default can_access_table = false",
-                "can_access_table {", "  input.request.table.schema == \"information_schema\"",
-                "  input.request.table.table == \"tables\"", "}");
-        List<String> tables = new ArrayList<String>();
+        submitPolicy(
+            "package trino",
+            "import future.keywords.in",
+            "default allow = false",
+            "allow {",
+            "  is_bob",
+            "  can_be_accessed_by_bob",
+            "}",
+            "is_bob() {",
+            "  input.context.identity.user == \"bob\"",
+            "}",
+            "can_be_accessed_by_bob() { ",
+            "  input.action.operation in [\"ImpersonateUser\", \"FilterCatalogs\", \"AccessCatalog\", \"ExecuteQuery\"]",
+            "}"
+        );
+        List<String> catalogs = new ArrayList<>();
         MaterializedResult result =
-                trinoClient.execute("SHOW TABLES IN system.information_schema").getResult();
+                trinoClient.execute("SHOW CATALOGS").getResult();
         for (MaterializedRow row : result) {
-            tables.add(row.getField(0).toString());
+            catalogs.add(row.getField(0).toString());
         }
-        assertEquals(tables, Collections.singletonList("tables"));
+        assertEquals(catalogs, Collections.singletonList("system"));
     }
 
     @Test
     public void testShouldDenyQueryIfDirected() throws IOException, InterruptedException {
-        submitPolicy("package trino", "default can_execute_query = true",
-                "default can_access_catalog = false",
-                "can_access_catalog { input.request.table.catalog == \"system\" }",
-                "default can_show_tables = true", "default can_select_from_columns = false",
-                "can_select_from_columns { can_access_table }", "default can_access_table = false",
-                "can_access_table {", "  input.request.table.schema == \"information_schema\"",
-                "  input.request.table.table == \"schemata\"", "}");
+        submitPolicy(
+            "package trino",
+            "import future.keywords.in",
+            "default allow = false",
+            "allow {",
+            "  is_bob",
+            "  can_be_accessed_by_bob",
+            "}",
+            "is_bob() {",
+            "  input.context.identity.user == \"bob\"",
+            "}",
+            "can_be_accessed_by_bob() { ",
+            "  input.action.operation in [\"ImpersonateUser\", \"FilterCatalogs\", \"AccessCatalog\", \"ExecuteQuery\"]",
+            "}"
+        );
         RuntimeException error = assertThrows(RuntimeException.class, () -> {
-            trinoClient.execute("SHOW TABLES IN system.information_schema");
+            trinoClient.execute("SHOW SCHEMAS IN system");
         });
         assertTrue(error.getMessage().contains("Access Denied"),
                 "Error must mention 'Access Denied': " + error.getMessage());

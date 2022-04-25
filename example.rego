@@ -1,33 +1,26 @@
 package trino
 
-can_execute_query = true
+import future.keywords.in
 
-can_access_catalog = true
+default allow = false
 
-can_create_schema = true
-
-can_drop_schema = true
-
-can_access_schema = true
-
-can_create_table = true
-
-can_drop_table = true
-
-can_access_table = true
-
-can_access_column = true
-
-can_show_schemas = true
-
-can_show_tables = true
-
-default can_select_from_columns = false
-
-can_select_from_columns {
-	input.request.table.catalog == "system"
-	input.request.table.schema == "information_schema"
-	input.request.table.table == {"tables", "schemata"}[_]
+allow {
+	is_admin
 }
 
-can_view_query_owned_by = true
+allow {
+	is_bob
+	can_be_accessed_by_bob
+}
+
+is_admin() {
+	input.context.identity.user == "admin"
+}
+
+is_bob() {
+	input.context.identity.user == "bob"
+}
+
+can_be_accessed_by_bob() {
+    input.action.operation in ["ImpersonateUser", "FilterCatalogs", "AccessCatalog", "ExecuteQuery"]
+}
