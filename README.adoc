@@ -30,11 +30,11 @@ include::example.rego[]
 
 This can be tested via the Trino CLI for the `admin` user:
 ----
-./trino-cli-377-executable.jar --server http://localhost:8080 --user=admin
+./trino-cli-395-executable.jar --server http://localhost:8080 --user=admin
 ----
 and for the user `bob`:
 ----
-./trino-cli-377-executable.jar --server http://localhost:8080 --user=bob
+./trino-cli-395-executable.jar --server http://localhost:8080 --user=bob
 ----
 
 When logged in as `bob` you should be able to run:
@@ -55,3 +55,37 @@ but should get an `Access Denied` failure when e.g. showing schemas:
 trino> SHOW SCHEMAS From system;
 Query 20220419_161650_00046_bu682 failed: Access Denied: Cannot show schemas
 ----
+
+=== Building
+To build the maven project invoke
+
+```
+mvn clean package
+```
+
+Afterwards you find the produced binaries in `/home/sbernauer/stackabletech/trino-opa-authorizer/target/out/`, especially out of interest is
+```
+-rw-rw-r-- 1 sbernauer sbernauer 33K Sep 15 09:53 /home/sbernauer/stackabletech/trino-opa-authorizer/target/out/trino-opa-authorizer-395-stackable0.1.0.jar
+```
+The small size is normal.
+We have to bundle all the produced jars to put them into a Trino setup.
+To achieve this run
+
+```
+ln -s target/out/ trino-opa-authorizer
+```
+
+and (you need to replace your version!)
+
+```
+tar -czvf trino-opa-authorizer-395-stackable0.1.0.tar.gz ./trino-opa-authorizer/*
+```
+
+Resulting file size should be in the neighborhood of 80 MB:
+```
+$ ls -lah trino-opa-authorizer-*.gz
+-rw-rw-r-- 1 sbernauer sbernauer 86M Sep 15 09:58 trino-opa-authorizer-395-stackable0.1.0.tar.gz
+```
+
+=== Releasing
+Releasing here is done by uploading the `trino-opa-authorizer-*-stackable0.1.0.tar.gz` into Nexus.

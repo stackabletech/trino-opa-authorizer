@@ -6,27 +6,27 @@
 
     <groupId>tech.stackable.trino</groupId>
     <artifactId>trino-opa-authorizer</artifactId>
-    <!-- The trino version part (here 377) should be in sync with the "trino.version" in properties. We need to hardcode
+    <!-- The trino version part (here 395) should be in sync with the "trino.version" in properties. We need to hardcode
          it here because Maven complains about variables/properties being used in "version" or "artifactId" -->
-    <version>377-0.1.0</version>
+    <version>395-stackable0.1.0</version>
 
-    <name>trino-opa-authorizer-377</name>
+    <name>trino-opa-authorizer-395</name>
     <!-- FIXME change it to the project's website -->
     <url>https://github.com/stackabletech/trino-opa-authorizer</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <fasterxml.jackson.version>2.13.2.1</fasterxml.jackson.version>
-        <trino.version>377</trino.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <fasterxml.jackson.version>2.13.4</fasterxml.jackson.version>
+        <trino.version>395</trino.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.8.1</version>
+            <version>5.9.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
