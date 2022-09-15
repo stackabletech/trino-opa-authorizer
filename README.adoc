@@ -30,11 +30,11 @@ include::example.rego[]
 
 This can be tested via the Trino CLI for the `admin` user:
 ----
-./trino-cli-377-executable.jar --server http://localhost:8080 --user=admin
+./trino-cli-395-executable.jar --server http://localhost:8080 --user=admin
 ----
 and for the user `bob`:
 ----
-./trino-cli-377-executable.jar --server http://localhost:8080 --user=bob
+./trino-cli-395-executable.jar --server http://localhost:8080 --user=bob
 ----
 
 When logged in as `bob` you should be able to run:
