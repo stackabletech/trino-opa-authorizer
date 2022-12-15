@@ -6,11 +6,11 @@
 
     <groupId>tech.stackable.trino</groupId>
     <artifactId>trino-opa-authorizer</artifactId>
-    <!-- The trino version part (here 396) should be in sync with the "trino.version" in properties. We need to hardcode
+    <!-- The trino version part (here 403) should be in sync with the "trino.version" in properties. We need to hardcode
          it here because Maven complains about variables/properties being used in "version" or "artifactId" -->
-    <version>396-stackable0.1.0</version>
+    <version>403-stackable0.1.0</version>
 
-    <name>trino-opa-authorizer-396</name>
+    <name>trino-opa-authorizer-403</name>
     <!-- FIXME change it to the project's website -->
     <url>https://github.com/stackabletech/trino-opa-authorizer</url>
 
@@ -19,7 +19,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <fasterxml.jackson.version>2.13.4</fasterxml.jackson.version>
-        <trino.version>396</trino.version>
+        <trino.version>403</trino.version>
     </properties>
 
     <dependencies>
