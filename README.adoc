@@ -30,11 +30,11 @@ include::example.rego[]
 
 This can be tested via the Trino CLI for the `admin` user:
 ----
-./trino-cli-396-executable.jar --server http://localhost:8080 --user=admin
+./trino-cli-403-executable.jar --server http://localhost:8080 --user=admin
 ----
 and for the user `bob`:
 ----
-./trino-cli-396-executable.jar --server http://localhost:8080 --user=bob
+./trino-cli-403-executable.jar --server http://localhost:8080 --user=bob
 ----
 
 When logged in as `bob` you should be able to run:
@@ -65,7 +65,7 @@ mvn clean package
 
 Afterwards you find the produced binaries in `/home/sbernauer/stackabletech/trino-opa-authorizer/target/out/`, especially out of interest is
 ```
--rw-rw-r-- 1 sbernauer sbernauer 33K Sep 15 09:53 /home/sbernauer/stackabletech/trino-opa-authorizer/target/out/trino-opa-authorizer-396-stackable0.1.0.jar
+-rw-rw-r-- 1 sbernauer sbernauer 33K Sep 15 09:53 /home/sbernauer/stackabletech/trino-opa-authorizer/target/out/trino-opa-authorizer-403-stackable0.1.0.jar
 ```
 The small size is normal.
 We have to bundle all the produced jars to put them into a Trino setup.
@@ -78,13 +78,13 @@ ln -s target/out/ trino-opa-authorizer
 and (you need to replace your version!)
 
 ```
-tar -czvf trino-opa-authorizer-396-stackable0.1.0.tar.gz ./trino-opa-authorizer/*
+tar -czvf trino-opa-authorizer-403-stackable0.1.0.tar.gz ./trino-opa-authorizer/*
 ```
 
 Resulting file size should be in the neighborhood of 80 MB:
 ```
 $ ls -lah trino-opa-authorizer-*.gz
--rw-rw-r-- 1 sbernauer sbernauer 86M Sep 15 09:58 trino-opa-authorizer-396-stackable0.1.0.tar.gz
+-rw-rw-r-- 1 sbernauer sbernauer 86M Sep 15 09:58 trino-opa-authorizer-403-stackable0.1.0.tar.gz
 ```
 
 === Releasing
