@@ -18,7 +18,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <fasterxml.jackson.version>2.13.4</fasterxml.jackson.version>
+        <fasterxml.jackson.version>2.13.4.1</fasterxml.jackson.version>
         <trino.version>403</trino.version>
     </properties>
 
