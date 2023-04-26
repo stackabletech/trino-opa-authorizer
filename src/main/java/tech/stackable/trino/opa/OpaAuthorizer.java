@@ -680,8 +680,6 @@ public class OpaAuthorizer implements SystemAccessControl {
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanGrantExecuteFunctionPrivilege(context, functionKind, functionName, grantee, grantOption);
         }
-
-
     }
 
     @Override
