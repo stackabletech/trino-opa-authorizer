@@ -4,6 +4,7 @@ import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.function.FunctionKind;
 import io.trino.spi.security.Identity;
 import io.trino.spi.security.TrinoPrincipal;
 
@@ -54,6 +55,7 @@ public class OpaQueryInputResource {
         public String newCatalogSchemaName;
         public TrinoPrincipal principal;
         public String catalogName;
+        public Map<String, Object> properties;
 
         public CatalogSchema(CatalogSchemaName schema) { this.catalogSchemaName = schema; }
 
@@ -63,9 +65,15 @@ public class OpaQueryInputResource {
             this.catalogSchemaName = catalogSchemaName;
             this.newCatalogSchemaName = newCatalogSchemaName;
         }
+
         public CatalogSchema(CatalogSchemaName catalogSchemaName, TrinoPrincipal principal) {
             this.catalogSchemaName = catalogSchemaName;
             this.principal = principal;
+        }
+
+        public CatalogSchema(CatalogSchemaName catalogSchemaName, Map<String, Object> properties) {
+            this.catalogSchemaName = catalogSchemaName;
+            this.properties = properties;
         }
     }
 
@@ -152,6 +160,7 @@ public class OpaQueryInputResource {
         public CatalogSchemaName schema;
         public io.trino.spi.security.Privilege privilege;
         public CatalogSchemaTableName table;
+        public FunctionKind functionKind;
 
         public Authorization(String functionName, TrinoPrincipal grantee, boolean grantOption) {
             this.functionName = functionName;
@@ -184,6 +193,13 @@ public class OpaQueryInputResource {
             this.table = table;
             this.grantee = grantee;
         }
+
+        public Authorization(FunctionKind functionKind, String functionName, TrinoPrincipal grantee, boolean grantOption) {
+            this.functionKind = functionKind;
+            this.functionName = functionName;
+            this.grantee = grantee;
+            this.grantOption = grantOption;
+        }
     }
 
     public static class Role {
@@ -215,6 +231,7 @@ public class OpaQueryInputResource {
         public String functionName;
         public String procedure;
         public CatalogSchemaTableName table;
+        public FunctionKind functionKind;
         public Execution(CatalogSchemaRoutineName routine) {
             this.routine = routine;
         }
@@ -226,6 +243,11 @@ public class OpaQueryInputResource {
         public Execution(CatalogSchemaTableName table, String procedure) {
             this.table = table;
             this.procedure = procedure;
+        }
+
+        public Execution(FunctionKind functionKind, CatalogSchemaRoutineName routine) {
+            this.routine = routine;
+            this.functionKind = functionKind;
         }
     }
 
