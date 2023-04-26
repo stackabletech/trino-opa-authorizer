@@ -6,11 +6,11 @@
 
     <groupId>tech.stackable.trino</groupId>
     <artifactId>trino-opa-authorizer</artifactId>
-    <!-- The trino version part (here 403) should be in sync with the "trino.version" in properties. We need to hardcode
+    <!-- The trino version part (here 414) should be in sync with the "trino.version" in properties. We need to hardcode
          it here because Maven complains about variables/properties being used in "version" or "artifactId" -->
-    <version>403-stackable0.1.0</version>
+    <version>414-stackable0.1.0</version>
 
-    <name>trino-opa-authorizer-403</name>
+    <name>trino-opa-authorizer-414</name>
     <!-- FIXME change it to the project's website -->
     <url>https://github.com/stackabletech/trino-opa-authorizer</url>
 
@@ -18,8 +18,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <fasterxml.jackson.version>2.13.4</fasterxml.jackson.version>
-        <trino.version>403</trino.version>
+        <fasterxml.jackson.core.databind.version>2.13.4.2</fasterxml.jackson.core.databind.version>
+        <fasterxml.jackson.datatype.jdk8.version>2.13.4</fasterxml.jackson.datatype.jdk8.version>
+        <trino.version>414</trino.version>
     </properties>
 
     <dependencies>
@@ -44,12 +45,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${fasterxml.jackson.version}</version>
+            <version>${fasterxml.jackson.core.databind.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
-            <version>${fasterxml.jackson.version}</version>
+            <version>${fasterxml.jackson.datatype.jdk8.version}</version>
         </dependency>
     </dependencies>
 
