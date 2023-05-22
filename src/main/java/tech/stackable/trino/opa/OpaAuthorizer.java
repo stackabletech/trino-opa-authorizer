@@ -17,6 +17,7 @@ import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.SchemaTableName;
 import io.trino.spi.eventlistener.EventListener;
+import io.trino.spi.function.FunctionKind;
 import io.trino.spi.security.*;
 import io.trino.spi.type.Type;
 
@@ -197,6 +198,28 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     @Override
+    public void checkCanCreateCatalog(SystemSecurityContext context, String catalog) {
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().catalog(new OpaQueryInputResource.Catalog(catalog)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction("CreateCatalog", resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
+
+        if (!queryOpa(input)) {
+            SystemAccessControl.super.checkCanCreateCatalog(context, catalog);
+        }
+    }
+
+    @Override
+    public void checkCanDropCatalog(SystemSecurityContext context, String catalog) {
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().catalog(new OpaQueryInputResource.Catalog(catalog)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction("DropCatalog", resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
+
+        if (!queryOpa(input)) {
+            SystemAccessControl.super.checkCanDropCatalog(context, catalog);
+        }
+    }
+
+    @Override
     public Set<String> filterCatalogs(SystemSecurityContext context, Set<String> catalogs) {
         return catalogs.parallelStream().filter(catalog -> queryOpa(
                         new OpaQueryInput(context,
@@ -206,13 +229,13 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     @Override
-    public void checkCanCreateSchema(SystemSecurityContext context, CatalogSchemaName schema) {
-        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().schema(new OpaQueryInputResource.CatalogSchema(schema)).build();
+    public void checkCanCreateSchema(SystemSecurityContext context, CatalogSchemaName schema, Map<String, Object> properties) {
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().schema(new OpaQueryInputResource.CatalogSchema(schema, properties)).build();
         OpaQueryInputAction action = new OpaQueryInputAction("CreateSchema", resource);
         OpaQueryInput input = new OpaQueryInput(context, action);
 
         if (!queryOpa(input)) {
-            SystemAccessControl.super.checkCanCreateSchema(context, schema);
+            SystemAccessControl.super.checkCanCreateSchema(context, schema, properties);
         }
     }
 
@@ -425,6 +448,17 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     @Override
+    public void checkCanAlterColumn(SystemSecurityContext context, CatalogSchemaTableName table) {
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().table(new OpaQueryInputResource.Table(table)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction("AlterColumn", resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
+
+        if (!queryOpa(input)) {
+            SystemAccessControl.super.checkCanAlterColumn(context, table);
+        }
+    }
+
+    @Override
     public void checkCanSetTableAuthorization(SystemSecurityContext context, CatalogSchemaTableName table, TrinoPrincipal principal) {
         OpaQueryInputResource resource = new OpaQueryInputResource.Builder().table(new OpaQueryInputResource.Table(table, principal)).build();
         OpaQueryInputAction action = new OpaQueryInputAction("SetTableAuthorization", resource);
@@ -617,6 +651,16 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     @Override
+    public void checkCanSetViewComment(SystemSecurityContext context, CatalogSchemaTableName view) {
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().view(new OpaQueryInputResource.View(view)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction("SetViewComment", resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
+        if (!queryOpa(input)) {
+            SystemAccessControl.super.checkCanSetViewComment(context, view);
+        }
+    }
+
+    @Override
     public void checkCanGrantExecuteFunctionPrivilege(SystemSecurityContext context, String functionName, TrinoPrincipal grantee, boolean grantOption) {
         OpaQueryInputResource resource = new OpaQueryInputResource.Builder().authorization(new OpaQueryInputResource.Authorization(functionName, grantee, grantOption)).build();
         OpaQueryInputAction action = new OpaQueryInputAction("GrantExecuteFunctionPrivilege", resource);
@@ -624,6 +668,17 @@ public class OpaAuthorizer implements SystemAccessControl {
 
         if (!queryOpa(input)) {
             SystemAccessControl.super.checkCanGrantExecuteFunctionPrivilege(context, functionName, grantee, grantOption);
+        }
+    }
+
+    @Override
+    public void checkCanGrantExecuteFunctionPrivilege(SystemSecurityContext context, FunctionKind functionKind, CatalogSchemaRoutineName functionName, TrinoPrincipal grantee, boolean grantOption) {
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().authorization(new OpaQueryInputResource.Authorization(functionKind, functionName.getRoutineName(), grantee, grantOption)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction("GrantExecuteFunctionPrivilege", resource);
+        OpaQueryInput input = new OpaQueryInput(context, action);
+
+        if (!queryOpa(input)) {
+            SystemAccessControl.super.checkCanGrantExecuteFunctionPrivilege(context, functionKind, functionName, grantee, grantOption);
         }
     }
 
@@ -811,6 +866,17 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     @Override
+    public void checkCanExecuteFunction(SystemSecurityContext systemSecurityContext, FunctionKind functionKind, CatalogSchemaRoutineName functionName) {
+        OpaQueryInputResource resource = new OpaQueryInputResource.Builder().execution(new OpaQueryInputResource.Execution(functionKind, functionName)).build();
+        OpaQueryInputAction action = new OpaQueryInputAction("ExecuteFunction", resource);
+        OpaQueryInput input = new OpaQueryInput(systemSecurityContext, action);
+
+        if (!queryOpa(input)) {
+            SystemAccessControl.super.checkCanExecuteFunction(systemSecurityContext, functionKind, functionName);
+        }
+    }
+
+    @Override
     public void checkCanExecuteTableProcedure(SystemSecurityContext systemSecurityContext, CatalogSchemaTableName table, String procedure) {
         OpaQueryInputResource resource = new OpaQueryInputResource.Builder().execution(new OpaQueryInputResource.Execution(table, procedure)).build();
         OpaQueryInputAction action = new OpaQueryInputAction("ExecuteTableProcedure", resource);
@@ -827,8 +893,8 @@ public class OpaAuthorizer implements SystemAccessControl {
     }
 
     @Override
-    public List<ViewExpression> getColumnMasks(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
-        return SystemAccessControl.super.getColumnMasks(context, tableName, columnName, type);
+    public Optional<ViewExpression> getColumnMask(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
+        return SystemAccessControl.super.getColumnMask(context, tableName, columnName, type);
     }
 
     @Override
