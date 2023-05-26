@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.trino.spi.connector.CatalogSchemaName;
@@ -28,11 +29,15 @@ public class OpaAuthorizer implements SystemAccessControl {
 
     public OpaAuthorizer(URI opaPolicyUri) {
         this.opaPolicyUri = opaPolicyUri;
-        this.json = new ObjectMapper();
-        // do not include null values
-        this.json.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        // deal with Optional<T> values
-        this.json.registerModule(new Jdk8Module());
+        this.json = new ObjectMapper()
+                // https://github.com/stackabletech/trino-opa-authorizer/issues/24
+                // OPA server can send other fields, such as `decision_id`` when enabling decision logs
+                // We could add all the fields we *currently* know, but it's more future-proof to ignore any unknown fields.
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                // do not include null values
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                // deal with Optional<T> values
+                .registerModule(new Jdk8Module());
     }
 
     private static class OpaQuery {
