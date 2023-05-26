@@ -73,8 +73,13 @@ public class OpaAuthorizerTest {
     @BeforeAll
     public static void setupTrino() throws IOException, InterruptedException {
         InetSocketAddress opaSocket = findAvailableTcpPort();
-        opaServer = new ProcessBuilder("opa", "run", "--server", "--addr",
-                opaSocket.getHostString() + ":" + opaSocket.getPort()).inheritIO().start();
+        String opa_endpoint =  opaSocket.getHostString() + ":" + opaSocket.getPort();
+        System.out.println("OPA has endpoint " + opa_endpoint);
+        opaServer = new ProcessBuilder("opa", "run",
+                "--server",
+                "--addr", opa_endpoint,
+                "--set", "decision_logs.console=true"
+        ).inheritIO().start();
         awaitSocketOpen(opaSocket, 100, 200);
         opaServerUri =
                 URI.create("http://" + opaSocket.getHostString() + ":" + opaSocket.getPort() + "/");

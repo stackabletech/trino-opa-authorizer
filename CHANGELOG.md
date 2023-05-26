@@ -1,5 +1,14 @@
 # Changelog
 
+## [414-stackable0.2.0] - 2023-05-26
+## [403-stackable0.2.0] - 2023-05-26
+## [396-stackable0.2.0] - 2023-05-26
+## [414-stackable0.2.0] - 2023-05-26
+
+### Fixed
+
+- Ignore additional JSON fields the OPA server is sending. This can e.g. be the cause when OPA decision logs are enabled  ([#27](https://github.com/stackabletech/trino-opa-authorizer/pull/27))
+
 ## [414-stackable0.1.0] - 2023-04-26
 
 ### Changed
