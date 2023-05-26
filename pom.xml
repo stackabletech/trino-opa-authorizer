@@ -8,7 +8,7 @@
     <artifactId>trino-opa-authorizer</artifactId>
     <!-- The trino version part (here 414) should be in sync with the "trino.version" in properties. We need to hardcode
          it here because Maven complains about variables/properties being used in "version" or "artifactId" -->
-    <version>414-stackable0.1.0</version>
+    <version>414-stackable0.2.0</version>
 
     <name>trino-opa-authorizer-414</name>
     <!-- FIXME change it to the project's website -->
