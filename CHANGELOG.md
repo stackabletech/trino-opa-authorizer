@@ -1,9 +1,6 @@
 # Changelog
 
 ## [414-stackable0.2.0] - 2023-05-26
-## [403-stackable0.2.0] - 2023-05-26
-## [396-stackable0.2.0] - 2023-05-26
-## [414-stackable0.2.0] - 2023-05-26
 
 ### Fixed
 
