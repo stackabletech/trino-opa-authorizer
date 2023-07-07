@@ -51,7 +51,10 @@ allow {
 }
 
 allow {
-    input.action == "FilterSchemas"
+    input.action in [
+        "FilterSchemas",
+        "ShowCreateSchema"
+    ]
 
     has_schema_permission(input.resource.schema.catalogSchemaName.catalogName, input.resource.schema.catalogSchemaName.schemaName, "ro")
 }

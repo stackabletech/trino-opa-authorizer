@@ -8,6 +8,7 @@ IMPLEMENTED
 * void checkCanSetCatalogSessionProperty(SystemSecurityContext context, String catalogName, String propertyName)
 * void checkCanShowSchemas(SystemSecurityContext context, String catalogName)
 * Set<String> filterSchemas(SystemSecurityContext context, String catalogName, Set<String> schemaNames)
+* void checkCanShowCreateSchema(SystemSecurityContext context, CatalogSchemaName schemaName)
 
 NOT IMPLEMENTED
 * void checkCanCreateCatalog(SystemSecurityContext context, String catalog) => Not implemented, as only admins should be able to do so. Users should use TrinoCatalog CRs instead.
@@ -25,7 +26,6 @@ TODO
 * void checkCanDropSchema(SystemSecurityContext context, CatalogSchemaName schema)
 * void checkCanRenameSchema(SystemSecurityContext context, CatalogSchemaName schema, String newSchemaName)
 * void checkCanSetSchemaAuthorization(SystemSecurityContext context, CatalogSchemaName schema, TrinoPrincipal principal)
-* void checkCanShowCreateSchema(SystemSecurityContext context, CatalogSchemaName schemaName)
 * void checkCanShowCreateTable(SystemSecurityContext context, CatalogSchemaTableName table)
 * void checkCanCreateTable(SystemSecurityContext context, CatalogSchemaTableName table, Map<String, Object> properties)
 * void checkCanDropTable(SystemSecurityContext context, CatalogSchemaTableName table)
