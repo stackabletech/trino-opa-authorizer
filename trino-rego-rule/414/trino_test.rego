@@ -31,6 +31,10 @@ catalog_acls := [
         "catalog": "lakehouse",
         "full": ["data-analysts"],
     },
+    {
+        "catalog": "catalog-without-schemas-acls",
+        "full": ["data-analysts"],
+    },
 ]
 
 # We have the following permissions:
@@ -89,10 +93,6 @@ test_normal_users_cant_impersonate {
     not allow with input as {"action": "ImpersonateUser", "resource": {"user": "customer-1-user-2"}, "context": {"identity": {"user": "customer-1-user-1"}}} with data.groups as groups with data.schema_acls as schema_acls
 }
 
-
-
-
-
 test_catalog_permissions {
     allow with input as {"action": "AccessCatalog", "resource": {"catalog": "lakehouse"}, "context": {"identity": {"user": "admin"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
     allow with input as {"action": "AccessCatalog", "resource": {"catalog": "lakehouse"}, "context": {"identity": {"user": "data-analyst-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
@@ -100,7 +100,27 @@ test_catalog_permissions {
 }
 
 test_show_schemas {
-    allow with input as {"action": "ShowSchemas", "resource": {"catalog": "lakehouse"}, "context": {"identity": {"user": "admin"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
-    allow with input as {"action": "ShowSchemas", "resource": {"catalog": "lakehouse"}, "context": {"identity": {"user": "data-analyst-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
-    not allow with input as {"action": "ShowSchemas", "resource": {"catalog": "lakehouse"}, "context": {"identity": {"user": "customer-1-user-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    allow with input as {"action": "ShowSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse"}}}, "context": {"identity": {"user": "admin"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    allow with input as {"action": "ShowSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse"}}}, "context": {"identity": {"user": "data-analyst-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    allow with input as {"action": "ShowSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse"}}}, "context": {"identity": {"user": "customer-1-user-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+}
+
+test_filter_schemas {
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "customer_1"}}}, "context": {"identity": {"user": "admin"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "customer_1"}}}, "context": {"identity": {"user": "data-analyst-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "customer_1"}}}, "context": {"identity": {"user": "customer-1-user-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    not allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "customer_1"}}}, "context": {"identity": {"user": "customer-2-user-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "customer_2"}}}, "context": {"identity": {"user": "admin"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "customer_2"}}}, "context": {"identity": {"user": "data-analyst-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    not allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "customer_2"}}}, "context": {"identity": {"user": "customer-1-user-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "customer_2"}}}, "context": {"identity": {"user": "customer-2-user-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "notExplicitlyListedInData"}}}, "context": {"identity": {"user": "admin"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "lakehouse", "schemaName": "notExplicitlyListedInData"}}}, "context": {"identity": {"user": "data-analyst-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+}
+
+test_access_schema_in_catalog_without_schemas_acls {
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "catalog-without-schemas-acls", "schemaName": "notExplicitlyListedInData"}}}, "context": {"identity": {"user": "admin"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
+    allow with input as {"action": "FilterSchemas", "resource": {"schema": {"catalogSchemaName": {"catalogName": "catalog-without-schemas-acls", "schemaName": "notExplicitlyListedInData"}}}, "context": {"identity": {"user": "data-analyst-1"}}} with data.groups as groups with data.catalog_acls as catalog_acls with data.schema_acls as schema_acls with data.table_acls as table_acls
 }

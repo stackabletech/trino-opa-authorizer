@@ -47,8 +47,7 @@ allow {
 
     # If the user has access to *any* schema in the catalog, we need to grant him the permission to list *all* schemas of the catalog.
     # They can be further filtered using the filterSchemas() function
-    some schema
-    has_schema_permission(input.resource.schema.catalogSchemaName.catalogName, schema, "ro")
+    has_permission_for_any_schema_in_catalog(input.resource.schema.catalogSchemaName.catalogName, "ro")
 }
 
 allow {
@@ -93,5 +92,17 @@ has_schema_permission(catalog, schema, permission) {
 
 # Permissions granted on catalog level are inherited for schemas as well
 has_schema_permission(catalog, schema, permission) {
+    has_catalog_permission(catalog, permission)
+}
+
+has_permission_for_any_schema_in_catalog(catalog, permission) {
+    some schema
+    some schema_id
+    data.schema_acls[schema_id].schema = schema
+    has_schema_permission(catalog, schema, permission)
+}
+
+# We might need this explicitly, as their might be no schema within this catalog in data.schema_acls
+has_permission_for_any_schema_in_catalog(catalog, permission) {
     has_catalog_permission(catalog, permission)
 }
