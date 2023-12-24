@@ -8,9 +8,9 @@
     <artifactId>trino-opa-authorizer</artifactId>
     <!-- The trino version part (here 414) should be in sync with the "trino.version" in properties. We need to hardcode
          it here because Maven complains about variables/properties being used in "version" or "artifactId" -->
-    <version>414-stackable0.2.0</version>
+    <version>435-stackable0.2.0</version>
 
-    <name>trino-opa-authorizer-414</name>
+    <name>trino-opa-authorizer-435</name>
     <!-- FIXME change it to the project's website -->
     <url>https://github.com/stackabletech/trino-opa-authorizer</url>
 
@@ -18,16 +18,16 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <fasterxml.jackson.core.databind.version>2.13.4.2</fasterxml.jackson.core.databind.version>
-        <fasterxml.jackson.datatype.jdk8.version>2.13.4</fasterxml.jackson.datatype.jdk8.version>
-        <trino.version>414</trino.version>
+        <fasterxml.jackson.core.databind.version>2.15.3</fasterxml.jackson.core.databind.version>
+        <fasterxml.jackson.datatype.jdk8.version>2.15.3</fasterxml.jackson.datatype.jdk8.version>
+        <trino.version>435</trino.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.0</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -43,6 +43,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-main</artifactId>
+            <version>${trino.version}</version>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${fasterxml.jackson.core.databind.version}</version>
@@ -51,6 +57,17 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
             <version>${fasterxml.jackson.datatype.jdk8.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${fasterxml.jackson.core.databind.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-testing-services</artifactId>
+            <version>${trino.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -89,12 +106,12 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.22.2</version>
+                    <version>3.2.3</version>
                     <dependencies>
                         <dependency>
                             <groupId>org.apache.maven.surefire</groupId>
                             <artifactId>surefire-junit-platform</artifactId>
-                            <version>2.22.2</version>
+                            <version>3.2.3</version>
                         </dependency>
                     </dependencies>
                 </plugin>

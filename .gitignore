@@ -2,3 +2,9 @@
 .project
 .settings
 target
+
+*.iml
+*.ipr
+*.iws
+
+.vscode

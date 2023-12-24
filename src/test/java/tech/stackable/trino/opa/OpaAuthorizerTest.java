@@ -1,8 +1,15 @@
 package tech.stackable.trino.opa;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import io.trino.Session;
+import io.trino.server.testing.TestingTrinoServer;
+import io.trino.spi.security.Identity;
+import io.trino.testing.MaterializedResult;
+import io.trino.testing.MaterializedRow;
+import io.trino.testing.TestingTrinoClient;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -14,24 +21,38 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 
-import io.trino.Session;
-import io.trino.execution.QueryIdGenerator;
-import io.trino.metadata.SessionPropertyManager;
-import io.trino.server.testing.TestingTrinoServer;
-import io.trino.spi.security.Identity;
-import io.trino.testing.MaterializedResult;
-import io.trino.testing.MaterializedRow;
-import io.trino.testing.TestingTrinoClient;
+import static io.trino.testing.TestingSession.testSessionBuilder;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OpaAuthorizerTest {
     private static URI opaServerUri;
     private static Process opaServer;
     private static TestingTrinoServer trinoServer;
     private static TestingTrinoClient trinoClient;
+
+    private static final String POLICY = """
+            package trino
+                        
+            import future.keywords.if
+            import future.keywords.in
+                        
+            default allow := false
+                        
+            allow if {
+            	is_bob
+            	can_be_accessed_by_bob
+            }
+                        
+            is_bob if input.identity.user == "bob"
+                        
+            is_bob if input.context.identity.user == "bob"
+                        
+            can_be_accessed_by_bob if {
+            	input.action.operation in ["ImpersonateUser", "FilterCatalogs", "AccessCatalog", "ExecuteQuery", "SetUser"]
+            }
+                        
+            """;
 
     /**
      * Get an unused TCP port on a local interface from the system
@@ -84,14 +105,17 @@ public class OpaAuthorizerTest {
         opaServerUri =
                 URI.create("http://" + opaSocket.getHostString() + ":" + opaSocket.getPort() + "/");
 
-        QueryIdGenerator idGen = new QueryIdGenerator();
-        Identity identity = Identity.forUser("bob").build();
-        SessionPropertyManager sessionPropertyManager = new SessionPropertyManager();
-        Session session = Session.builder(sessionPropertyManager)
-                .setQueryId(idGen.createNextQueryId()).setIdentity(identity).build();
-        trinoServer = TestingTrinoServer.builder()
-                .setSystemAccessControls(Collections.singletonList(new OpaAuthorizer(opaServerUri.resolve("v1/data/trino/allow"))))
+        Identity identity = new Identity.Builder("bob").build();
+
+        Session session = testSessionBuilder()
+                .setOriginalIdentity(identity)
+                .setIdentity(identity)
                 .build();
+
+        trinoServer = TestingTrinoServer.builder()
+                .setSystemAccessControl(new OpaAuthorizer(opaServerUri.resolve("v1/data/trino/allow")))
+                .build();
+
         trinoClient = new TestingTrinoClient(trinoServer, session);
     }
 
@@ -137,21 +161,8 @@ public class OpaAuthorizerTest {
 
     @Test
     public void testShouldAllowQueryIfDirected() throws IOException, InterruptedException {
-        submitPolicy(
-            "package trino",
-            "import future.keywords.in",
-            "default allow = false",
-            "allow {",
-            "  is_bob",
-            "  can_be_accessed_by_bob",
-            "}",
-            "is_bob() {",
-            "  input.context.identity.user == \"bob\"",
-            "}",
-            "can_be_accessed_by_bob() { ",
-            "  input.action.operation in [\"ImpersonateUser\", \"FilterCatalogs\", \"AccessCatalog\", \"ExecuteQuery\"]",
-            "}"
-        );
+        submitPolicy(POLICY);
+
         List<String> catalogs = new ArrayList<>();
         MaterializedResult result =
                 trinoClient.execute("SHOW CATALOGS").getResult();
@@ -163,21 +174,8 @@ public class OpaAuthorizerTest {
 
     @Test
     public void testShouldDenyQueryIfDirected() throws IOException, InterruptedException {
-        submitPolicy(
-            "package trino",
-            "import future.keywords.in",
-            "default allow = false",
-            "allow {",
-            "  is_bob",
-            "  can_be_accessed_by_bob",
-            "}",
-            "is_bob() {",
-            "  input.context.identity.user == \"bob\"",
-            "}",
-            "can_be_accessed_by_bob() { ",
-            "  input.action.operation in [\"ImpersonateUser\", \"FilterCatalogs\", \"AccessCatalog\", \"ExecuteQuery\"]",
-            "}"
-        );
+        submitPolicy(POLICY);
+
         RuntimeException error = assertThrows(RuntimeException.class, () -> {
             trinoClient.execute("SHOW SCHEMAS IN system");
         });

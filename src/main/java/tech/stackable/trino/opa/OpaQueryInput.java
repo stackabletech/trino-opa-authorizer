@@ -2,7 +2,7 @@ package tech.stackable.trino.opa;
 
 import io.trino.spi.security.SystemSecurityContext;
 
-public class OpaQueryInput {
+public class OpaQueryInput extends OpaQueryInputGeneric {
     public final SystemSecurityContext context;
     public final OpaQueryInputAction action;
 
