@@ -1,5 +1,9 @@
 = trino-opa-authorizer
 
+IMPORTANT: This repository has been archived and is not being maintained any more.
+Development of this authorizer has been moved into the Trino project itself:
+https://github.com/trinodb/trino/pull/19532
+
 == Usage
 
 
